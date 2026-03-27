@@ -51,5 +51,29 @@ wire sclk_rising = (sclk_sync2 == 1'b1) && (sclk_prev == 1'b0);
 wire ncs_rising  = (ncs_sync2  == 1'b1) && (ncs_prev  == 1'b0);
 wire ncs_falling = (ncs_sync2  == 1'b0) && (ncs_prev  == 1'b1);
 
+// Shift register + bit counter
+reg [15:0] shift_reg;
+reg [4:0] bit_count;
+
+
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        shift_reg <= 16'b0;
+        bit_count <= 5'b0;
+    end else begin
+
+        // Start of transaction
+        if (ncs_falling) begin
+            bit_count <= 0;
+            shift_reg <= 16'b0;
+        end
+
+        // During transaction: capture bits on SCLK rising edge
+        else if (ncs_sync2 == 1'b0 && sclk_rising) begin
+            shift_reg <= {shift_reg[14:0], copi_sync2}; // shift left
+            bit_count <= bit_count + 1;
+        end
+    end
+end
 
 endmodule
