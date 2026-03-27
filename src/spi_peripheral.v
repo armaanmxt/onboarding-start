@@ -76,4 +76,38 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
+
+// Decode and update registers
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        // already handled above, no need to repeat
+    end else begin
+
+        if (ncs_rising && bit_count == 16) begin
+
+            // Extract fields
+            // [15] = R/W
+            // [14:8] = address
+            // [7:0] = data
+
+            if (shift_reg[15] == 1'b1) begin  // WRITE only
+
+                case (shift_reg[14:8])
+
+                    7'h00: en_reg_out_7_0  <= shift_reg[7:0];
+                    7'h01: en_reg_out_15_8 <= shift_reg[7:0];
+                    7'h02: en_reg_pwm_7_0  <= shift_reg[7:0];
+                    7'h03: en_reg_pwm_15_8 <= shift_reg[7:0];
+                    7'h04: pwm_duty_cycle  <= shift_reg[7:0];
+
+                    default: begin
+                        // ignore invalid address
+                    end
+
+                endcase
+            end
+        end
+    end
+end
+
 endmodule
